@@ -11,6 +11,7 @@ export const config = {
   jwtSecret: obrigatoria('JWT_SECRET'),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
   port: Number(process.env.PORT ?? 3000),
+  trustProxy: Number(process.env.TRUST_PROXY ?? 0),
   uploadDir: process.env.UPLOAD_DIR ?? 'uploads',
   bairro: {
     latMin: Number(process.env.BAIRRO_LAT_MIN ?? -26.29),
