@@ -12,7 +12,7 @@
       @for (p of parecidos(); track p.id) {
         <div class="card">
           <div class="entre">
-            <h3>{{ rotuloTipo(p.tipo) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</h3>
+            <h3>{{ rotuloTipo(p.tipo, p.nomeOutro) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</h3>
             <app-status-tag [status]="p.status" />
           </div>
           <p class="meta">A {{ p.distanciaMetros }} m daqui · aberto {{ textoDias(p.criadoEm) }} · {{ p.totalConfirmacoes + 1 }} {{ p.totalConfirmacoes === 0 ? 'vizinho' : 'vizinhos' }}</p>
@@ -34,6 +34,30 @@
       }
     </fieldset>
     @if (erros().tipo) { <p class="erro-campo" id="erro-tipo" role="alert">{{ erros().tipo }}</p> }
+
+    @if (sugeridos().length) {
+      <div class="sugeridos" role="group" aria-labelledby="titulo-sugeridos">
+        <p class="ajuda" id="titulo-sugeridos">Outros problemas que os vizinhos já registraram:</p>
+        <div class="linha-sugeridos">
+          @for (s of sugeridos(); track s.nome) {
+            <button type="button" class="btn peq sec" [attr.aria-pressed]="tipo === 'OUTRO' && nomeOutro === s.nome" (click)="escolherSugerido(s)">
+              {{ s.nome }} <span class="meta">· {{ s.moradores }} vizinhos</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (tipo === 'OUTRO') {
+      <div class="campo-nome-outro">
+        <label for="nome-outro">Qual é o problema?</label>
+        <input id="nome-outro" name="nomeOutro" type="text" maxlength="40" placeholder="Ex.: mato alto, árvore caída"
+          [ngModel]="nomeOutro" (ngModelChange)="atualizarNomeOutro($event)" [attr.aria-invalid]="!!erros().nomeOutro"
+          [attr.aria-describedby]="erros().nomeOutro ? 'erro-nome-outro' : 'ajuda-nome-outro'" />
+        <span class="ajuda" id="ajuda-nome-outro">Quando 3 vizinhos usam o mesmo nome, ele vira uma opção sugerida.</span>
+        @if (erros().nomeOutro) { <p class="erro-campo" id="erro-nome-outro" role="alert">{{ erros().nomeOutro }}</p> }
+      </div>
+    }
 
     <div style="margin-top:16px">
       <span class="rotulo" id="local" tabindex="-1">2. Onde fica?</span>

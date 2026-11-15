@@ -114,3 +114,9 @@ textarea { min-height: 80px; resize: vertical; }
 .visualmente-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Tipos sugeridos pela comunidade (ajuste da 1ª validação) */
+.sugeridos, .campo-nome-outro { margin-top: 12px; }
+.linha-sugeridos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.linha-sugeridos .btn { width: auto; }
+.linha-sugeridos .btn[aria-pressed=true] { border-color: var(--azul); background: var(--azul-claro); }
