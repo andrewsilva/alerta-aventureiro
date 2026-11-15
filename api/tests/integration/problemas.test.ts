@@ -148,6 +148,47 @@ describe('acompanhamento e contestação (RF05 e RF06)', () => {
   });
 });
 
+describe('tipos sugeridos pela comunidade (ajuste da 1ª validação)', () => {
+  const longe = (n: number) => ({ latitude: PONTO.latitude + n * 0.002 });
+
+  it('guarda o nome escrito em Outro e mostra na lista', async () => {
+    const { token } = await criarMorador();
+    const res = await registrar(token, { tipo: 'OUTRO', nomeOutro: 'mato ALTO' });
+    expect(res.status).toBe(201);
+    const lista = await request(app).get('/api/problemas');
+    expect(lista.body[0].nomeOutro).toBe('Mato alto');
+  });
+
+  it('recusa Outro sem dizer qual é o problema', async () => {
+    const { token } = await criarMorador();
+    const res = await registrar(token, { tipo: 'OUTRO' });
+    expect(res.status).toBe(400);
+    expect(res.body.campos[0].campo).toBe('nomeOutro');
+  });
+
+  it('não trata como parecidos dois problemas Outro com nomes diferentes', async () => {
+    const a = await criarMorador('Ana');
+    const b = await criarMorador('Beto');
+    await registrar(a.token, { tipo: 'OUTRO', nomeOutro: 'Mato alto' });
+    const res = await registrar(b.token, { tipo: 'OUTRO', nomeOutro: 'Árvore caída' });
+    expect(res.status).toBe(201);
+  });
+
+  it('sugere o nome só depois de 3 moradores diferentes usarem', async () => {
+    const [a, b, c] = [await criarMorador('Ana'), await criarMorador('Beto'), await criarMorador('Cida')];
+    await registrar(a.token, { tipo: 'OUTRO', nomeOutro: 'Mato alto', ...longe(1) });
+    await registrar(a.token, { tipo: 'OUTRO', nomeOutro: 'mato alto', ...longe(2), forcarNovo: true });
+    await registrar(b.token, { tipo: 'OUTRO', nomeOutro: 'Mato Alto', ...longe(3) });
+    let sugeridos = await request(app).get('/api/problemas/tipos-sugeridos');
+    expect(sugeridos.status).toBe(200);
+    expect(sugeridos.body).toEqual([]);
+
+    await registrar(c.token, { tipo: 'OUTRO', nomeOutro: 'MATO ALTO', ...longe(4) });
+    sugeridos = await request(app).get('/api/problemas/tipos-sugeridos');
+    expect(sugeridos.body).toEqual([{ nome: 'Mato alto', moradores: 3 }]);
+  });
+});
+
 describe('segurança de entradas (RNF02)', () => {
   it('recusa script na descrição e não grava nada', async () => {
     const { token } = await criarMorador();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { podeContestar, primeiroNome, validarMudancaDeStatus } from '../../src/modules/problemas/problemas.regras.js';
+import { normalizarNomeOutro, podeContestar, primeiroNome, validarMudancaDeStatus } from '../../src/modules/problemas/problemas.regras.js';
 
 describe('validarMudancaDeStatus', () => {
   it('permite avisar a prefeitura quando há protocolo', () => {
@@ -43,5 +43,12 @@ describe('podeContestar', () => {
 describe('primeiroNome', () => {
   it('expõe apenas o primeiro nome do autor', () => {
     expect(primeiroNome('  Sueli Aparecida da Silva ')).toBe('Sueli');
+  });
+});
+
+describe('normalizarNomeOutro', () => {
+  it('junta espaços e deixa só a primeira letra maiúscula', () => {
+    expect(normalizarNomeOutro('  ÁRVORE   caída ')).toBe('Árvore caída');
+    expect(normalizarNomeOutro('mato alto')).toBe(normalizarNomeOutro('Mato Alto'));
   });
 });
