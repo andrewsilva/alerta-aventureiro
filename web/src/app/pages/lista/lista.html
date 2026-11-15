@@ -23,6 +23,7 @@
   } @else if (!problemas().length && !erro()) {
     <div class="vazio">
       <p>Nenhum problema registrado {{ filtro() ? 'com essa situação' : 'ainda' }}.</p>
+      @if (!filtro()) { <a class="btn" routerLink="/registrar">Registrar o primeiro</a> }
     </div>
   }
 
