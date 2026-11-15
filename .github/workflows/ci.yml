@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: API (testes unitários e de integração)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alerta_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/alerta_test
+      JWT_SECRET: segredo-somente-para-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci
+      - name: Verificação de tipos
+        run: npm run typecheck
+      - name: Testes com cobertura
+        run: npm run test:coverage
+      - name: Build
+        run: npm run build
+      - name: Auditoria de dependências
+        run: npm audit --omit=dev --audit-level=high
+
