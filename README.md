@@ -67,6 +67,14 @@ Para testar no celular na mesma rede Wi-Fi, rode `npx ng serve --host 0.0.0.0` e
 
 Conta de demonstração criada pelo seed: celular `(47) 90000-0001`, senha `teste-aventureiro`.
 
+## Publicação
+
+- **API:** conecte a branch `main` no Render com o Blueprint `render.yaml`. Informe `DATABASE_URL` do banco de publicação e o domínio da interface em `CORS_ORIGIN`. O Blueprint gera `JWT_SECRET`, aplica as migrações ao iniciar e usa `/api/saude` para verificar a conexão com o banco.
+- **Interface:** importe a `main` no Vercel com `web` como diretório do projeto. Se o Render gerar um domínio diferente do previsto, atualize os destinos de `/api` e `/uploads` em `web/vercel.json`.
+- **Monitoramento:** configure um monitor HTTP para a página publicada e outro para `/api/saude`. Os logs da API ficam no painel do Render.
+
+Use um banco de publicação separado da demonstração local, cujo seed cria contas com senhas de exemplo. Veja o [ADR 0005](docs/adr/0005-publicacao-render-vercel.md) para as decisões e limitações.
+
 ## Testes
 
 ```bash
