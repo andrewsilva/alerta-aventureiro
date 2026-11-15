@@ -1,4 +1,3 @@
-import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
@@ -16,7 +15,6 @@ import { StatusTag } from '../../shared/status-tag';
 export class Lista implements OnInit {
   private readonly servico = inject(ProblemasService);
   private readonly router = inject(Router);
-  private readonly documento = inject(DOCUMENT);
   protected readonly auth = inject(AuthService);
 
   protected readonly problemas = signal<Problema[]>([]);
@@ -29,11 +27,7 @@ export class Lista implements OnInit {
   protected readonly rotuloTipo = rotuloTipo;
   protected readonly textoDias = textoDias;
 
-  ngOnInit() {
-    const mensagem: unknown = this.router.currentNavigation()?.extras.state?.['mensagem'];
-    if (typeof mensagem === 'string') this.aviso.set(mensagem);
-    this.carregar();
-  }
+  ngOnInit() { this.carregar(); }
 
   async carregar() {
     this.carregando.set(true);
@@ -71,7 +65,7 @@ export class Lista implements OnInit {
     }
   }
 
-  focarProblema(id: string) {
-    this.documento.getElementById(`problema-${id}`)?.focus();
+  abrirProblema(id: string) {
+    this.router.navigate(['/problemas', id]);
   }
 }

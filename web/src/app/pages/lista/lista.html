@@ -5,7 +5,7 @@
 </header>
 
 <main class="conteudo" id="conteudo">
-  <app-mapa [problemas]="problemas()" (problemaTocado)="focarProblema($event)" rotulo="Mapa com os problemas registrados no bairro" />
+  <app-mapa [problemas]="problemas()" (problemaTocado)="abrirProblema($event)" rotulo="Mapa com os problemas registrados no bairro" />
 
   <div class="filtros" role="group" aria-label="Filtrar por situação">
     @for (f of filtros; track f) {
@@ -28,9 +28,9 @@
   }
 
   @for (p of problemas(); track p.id) {
-    <article class="card" [id]="'problema-' + p.id" tabindex="-1">
+    <article class="card">
       <div class="entre">
-        <h2>{{ rotuloTipo(p.tipo) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</h2>
+        <h2><a class="titulo" [routerLink]="['/problemas', p.id]">{{ rotuloTipo(p.tipo) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</a></h2>
         <app-status-tag [status]="p.status" />
       </div>
       @if (p.descricao) { <p class="meta">{{ p.descricao }}</p> }
