@@ -87,11 +87,11 @@ export class Registrar {
     }
     this.enviando.set(true);
     try {
-      await this.servico.registrar({
+      const criado = await this.servico.registrar({
         tipo: this.tipo!, ...this.ponto()!, descricao: this.descricao.trim() || undefined,
         referenciaEndereco: this.referencia.trim() || undefined, foto: this.foto(), forcarNovo,
       });
-      await this.router.navigate(['/'], { state: { mensagem: 'Registro enviado. Obrigado por avisar o bairro!' } });
+      await this.router.navigate(['/problemas', criado.id], { state: { mensagem: 'Registro enviado. Obrigado por avisar o bairro!' } });
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 409 && err.error?.detalhes?.parecidos) {
         this.parecidos.set(err.error.detalhes.parecidos);
@@ -109,7 +109,7 @@ export class Registrar {
     this.enviando.set(true);
     try {
       await this.servico.confirmar(p.id);
-      await this.router.navigate(['/'], { state: { mensagem: 'Sua confirmação foi registrada. Obrigado!' } });
+      await this.router.navigate(['/problemas', p.id], { state: { mensagem: 'Sua confirmação foi registrada. Obrigado!' } });
     } catch (err) {
       this.erros.set({ geral: mensagemDeErro(err) });
     } finally {

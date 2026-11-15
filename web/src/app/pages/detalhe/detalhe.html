@@ -1,0 +1,88 @@
+@if (p(); as p) {
+  <header class="topo">
+    <p class="marca">Alerta Aventureiro</p>
+    <h1>{{ rotuloTipo(p.tipo) }}</h1>
+    <p>{{ p.referenciaEndereco || 'Bairro Aventureiro' }} · {{ p.totalConfirmacoes + 1 }} {{ p.totalConfirmacoes === 0 ? 'vizinho afetado' : 'vizinhos afetados' }}</p>
+  </header>
+
+  <main class="conteudo">
+    @if (mensagem()) { <p class="sucesso" role="status">{{ mensagem() }}</p> }
+    @if (erro()) { <p class="falha" role="alert">{{ erro() }}</p> }
+
+    <div class="entre" style="display:flex;justify-content:space-between;align-items:center">
+      <app-status-tag [status]="p.status" />
+      <span class="meta">aberto {{ textoDias(p.criadoEm) }}</span>
+    </div>
+    @if (p.descricao) { <p style="margin:0">{{ p.descricao }}</p> }
+
+    @if (p.fotoAntesUrl || p.fotoDepoisUrl) {
+      <div class="fotos">
+        @if (p.fotoAntesUrl) { <figure><img [src]="p.fotoAntesUrl" alt="Foto do problema registrada pelo morador" /><figcaption>Antes</figcaption></figure> }
+        @if (p.fotoDepoisUrl) { <figure><img [src]="p.fotoDepoisUrl" alt="Foto do local depois do conserto" /><figcaption>Depois</figcaption></figure> }
+      </div>
+    }
+
+    <section aria-labelledby="titulo-andamento">
+      <h2 id="titulo-andamento" class="rotulo">Andamento</h2>
+      <ol class="linha-tempo">
+        @for (e of etapas(); track e.status) {
+          <li>
+            <span class="marco {{ e.estado }}" aria-hidden="true">{{ e.estado === 'feito' ? '✓' : e.estado === 'atual' ? '●' : e.estado === 'pulado' ? '–' : '…' }}</span>
+            <div>
+              <strong>{{ e.rotulo }}</strong>
+              <span class="visualmente-oculto">({{ e.estado === 'feito' ? 'concluído' : e.estado === 'atual' ? 'etapa atual' : e.estado === 'pulado' ? 'não informado' : 'pendente' }})</span>
+              <div class="meta">{{ e.detalhe }}</div>
+            </div>
+          </li>
+        }
+        @for (c of contestacoes(); track $index) {
+          <li>
+            <span class="marco contestado" aria-hidden="true">!</span>
+            <div><strong>{{ EVENTOS[c.tipoEvento] }}</strong><div class="meta">{{ c.observacao }} · {{ c.autorNome }}</div></div>
+          </li>
+        }
+      </ol>
+    </section>
+
+    @if (p.status !== 'RESOLVIDO' && auth.morador()?.id !== p.autorId) {
+      <button class="btn sec" type="button" (click)="confirmar()" [disabled]="ocupado()"><span aria-hidden="true">👍</span> Eu também vi</button>
+    }
+
+    @if (p.status === 'ABERTO') {
+      @if (painel() === 'protocolo') {
+        <form class="card" (ngSubmit)="avisarPrefeitura()">
+          <label for="protocolo">Número do protocolo do 156</label>
+          <input id="protocolo" name="protocolo" type="text" maxlength="40" [(ngModel)]="protocolo" required />
+          <button class="btn" type="submit" [disabled]="ocupado() || !protocolo.trim()">Salvar protocolo</button>
+        </form>
+      } @else {
+        <button class="btn sec" type="button" (click)="painel.set('protocolo')"><span aria-hidden="true">✉</span> Já avisei o 156: informar protocolo</button>
+      }
+    }
+    @if (p.status === 'ABERTO' || p.status === 'AVISADO_PREFEITURA') {
+      <button class="btn sec" type="button" (click)="emAndamento()" [disabled]="ocupado()"><span aria-hidden="true">⚙</span> A equipe começou o conserto</button>
+    }
+    @if (p.status !== 'RESOLVIDO') {
+      <label class="btn sec" for="foto-depois"><span aria-hidden="true">📷</span> Marcar como resolvido (com foto do depois)</label>
+      <input class="visualmente-oculto" id="foto-depois" type="file" accept="image/*" capture="environment" (change)="resolver($event)" [disabled]="ocupado()" />
+    }
+    @if (podeContestar()) {
+      @if (painel() === 'contestar') {
+        <form class="card" (ngSubmit)="contestar()">
+          <label for="motivo">Por que o problema voltou?</label>
+          <textarea id="motivo" name="motivo" maxlength="200" [(ngModel)]="motivo" required></textarea>
+          <button class="btn alerta" type="submit" [disabled]="ocupado() || motivo.trim().length < 3">Enviar contestação</button>
+        </form>
+      } @else {
+        <button class="btn alerta" type="button" (click)="painel.set('contestar')"><span aria-hidden="true">⚠</span> Contestar: o problema voltou</button>
+      }
+    }
+    <a class="btn sec" routerLink="/">Voltar para a lista</a>
+  </main>
+} @else {
+  <header class="topo"><p class="marca">Alerta Aventureiro</p><h1>Problema</h1></header>
+  <main class="conteudo">
+    @if (erro()) { <p class="falha" role="alert">{{ erro() }}</p> <a class="btn sec" routerLink="/">Voltar para a lista</a> }
+    @else { <p class="vazio" role="status">Carregando…</p> }
+  </main>
+}
