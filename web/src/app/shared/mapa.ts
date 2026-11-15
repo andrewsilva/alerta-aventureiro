@@ -51,8 +51,10 @@ export class Mapa implements AfterViewInit, OnDestroy {
     if (!this.mapa) return;
     this.camada.clearLayers();
     for (const p of lista) {
+      const rotulo = document.createElement('span');
+      rotulo.textContent = `${rotuloTipo(p.tipo, p.nomeOutro)} · ${STATUS[p.status].rotulo}`;
       L.circleMarker([p.latitude, p.longitude], { radius: 10, color: '#fff', weight: 3, fillColor: CORES[p.status], fillOpacity: 1 })
-        .bindTooltip(`${rotuloTipo(p.tipo)} · ${STATUS[p.status].rotulo}`)
+        .bindTooltip(rotulo)
         .on('click', () => this.problemaTocado.emit(p.id))
         .addTo(this.camada);
     }

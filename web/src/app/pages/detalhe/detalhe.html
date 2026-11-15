@@ -1,7 +1,7 @@
 @if (p(); as p) {
   <header class="topo">
     <p class="marca">Alerta Aventureiro</p>
-    <h1>{{ rotuloTipo(p.tipo) }}</h1>
+    <h1>{{ rotuloTipo(p.tipo, p.nomeOutro) }}</h1>
     <p>{{ p.referenciaEndereco || 'Bairro Aventureiro' }} · {{ p.totalConfirmacoes + 1 }} {{ p.totalConfirmacoes === 0 ? 'vizinho afetado' : 'vizinhos afetados' }}</p>
   </header>
 

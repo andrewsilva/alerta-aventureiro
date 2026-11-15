@@ -18,4 +18,10 @@ describe('modelos', () => {
   it('traduz o tipo do problema para o morador', () => {
     expect(rotuloTipo('LIXO_ENTULHO')).toBe('Lixo/entulho');
   });
+
+  it('usa o nome escrito pelo morador quando o tipo é Outro', () => {
+    expect(rotuloTipo('OUTRO', 'Mato alto')).toBe('Mato alto');
+    expect(rotuloTipo('OUTRO', null)).toBe('Outro');
+    expect(rotuloTipo('BURACO', 'Mato alto')).toBe('Buraco');
+  });
 });

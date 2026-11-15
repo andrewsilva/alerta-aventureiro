@@ -1,15 +1,16 @@
-import { and, asc, desc, eq, gte, lte, ne, sql } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, gte, isNotNull, lte, ne, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client.js';
 import { confirmacao, historicoStatus, morador, problema } from '../../db/schema.js';
 import type { StatusProblema, TipoProblema } from '../../db/schema.js';
 import { conflito, naoEncontrado, proibido, regraViolada } from '../../lib/erros.js';
 import { caixaAoRedor, dentroDoBairro, distanciaEmMetros, type Limites } from '../../lib/geo.js';
 import {
-  RAIO_PARECIDOS_METROS, eventoParaStatus, podeContestar, primeiroNome, validarMudancaDeStatus,
+  MAX_TIPOS_SUGERIDOS, MIN_MORADORES_TIPO_SUGERIDO, RAIO_PARECIDOS_METROS, eventoParaStatus, podeContestar, primeiroNome, validarMudancaDeStatus,
 } from './problemas.regras.js';
 
 export interface NovoProblema {
   tipo: TipoProblema;
+  nomeOutro?: string;
   latitude: number;
   longitude: number;
   descricao?: string;
@@ -21,6 +22,7 @@ export interface NovoProblema {
 const camposPublicos = {
   id: problema.id,
   tipo: problema.tipo,
+  nomeOutro: problema.nomeOutro,
   descricao: problema.descricao,
   latitude: problema.latitude,
   longitude: problema.longitude,
@@ -47,12 +49,14 @@ export function criarProblemasService(db: Db, limitesBairro: Limites) {
     return p;
   }
 
-  async function parecidos(tipo: TipoProblema, latitude: number, longitude: number) {
+  async function parecidos(tipo: TipoProblema, latitude: number, longitude: number, nomeOutro?: string) {
     const caixa = caixaAoRedor({ latitude, longitude }, RAIO_PARECIDOS_METROS);
     const candidatos = await db.select(camposPublicos).from(problema)
       .innerJoin(morador, eq(problema.moradorId, morador.id))
       .where(and(
         eq(problema.tipo, tipo), ne(problema.status, 'RESOLVIDO'), eq(problema.oculto, false),
+        // Em "Outro", só é parecido se o nome também for o mesmo (mato alto não duplica árvore caída).
+        ...(tipo === 'OUTRO' && nomeOutro ? [eq(problema.nomeOutro, nomeOutro)] : []),
         gte(problema.latitude, caixa.latMin), lte(problema.latitude, caixa.latMax),
         gte(problema.longitude, caixa.lngMin), lte(problema.longitude, caixa.lngMax),
       ));
@@ -68,12 +72,12 @@ export function criarProblemasService(db: Db, limitesBairro: Limites) {
     async registrar(autorId: string, dados: NovoProblema) {
       if (!dentroDoBairro(dados, limitesBairro)) throw regraViolada('O local informado fica fora do bairro Aventureiro.');
       if (!dados.forcarNovo) {
-        const similares = await parecidos(dados.tipo, dados.latitude, dados.longitude);
+        const similares = await parecidos(dados.tipo, dados.latitude, dados.longitude, dados.nomeOutro);
         if (similares.length) throw conflito('Já existe um problema parecido registrado perto deste local.', { parecidos: similares });
       }
       return db.transaction(async (tx) => {
         const [novo] = await tx.insert(problema).values({
-          tipo: dados.tipo, latitude: dados.latitude, longitude: dados.longitude,
+          tipo: dados.tipo, nomeOutro: dados.tipo === 'OUTRO' ? dados.nomeOutro : undefined, latitude: dados.latitude, longitude: dados.longitude,
           descricao: dados.descricao, referenciaEndereco: dados.referenciaEndereco,
           fotoAntesUrl: dados.fotoAntesUrl, moradorId: autorId,
         }).returning();
@@ -93,6 +97,18 @@ export function criarProblemasService(db: Db, limitesBairro: Limites) {
         .orderBy(desc(problema.totalConfirmacoes), asc(problema.criadoEm))
         .limit(100);
       return linhas.map(publicar);
+    },
+
+    /** Nomes usados em "Outro" por pelo menos 3 moradores diferentes viram botões sugeridos no registro. */
+    async tiposSugeridos() {
+      const moradores = countDistinct(problema.moradorId);
+      const linhas = await db.select({ nome: problema.nomeOutro, moradores }).from(problema)
+        .where(and(eq(problema.tipo, 'OUTRO'), isNotNull(problema.nomeOutro), eq(problema.oculto, false)))
+        .groupBy(problema.nomeOutro)
+        .having(gte(moradores, MIN_MORADORES_TIPO_SUGERIDO))
+        .orderBy(desc(moradores), asc(problema.nomeOutro))
+        .limit(MAX_TIPOS_SUGERIDOS);
+      return linhas.map((l) => ({ nome: l.nome as string, moradores: Number(l.moradores) }));
     },
 
     async detalhar(id: string) {

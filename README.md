@@ -16,6 +16,7 @@ Projeto desenvolvido na disciplina Projeto de Software (CST em Análise e Desenv
 | RF04 | Lista e mapa dos problemas do bairro, com filtro por situação |
 | RF05 | Andamento: protocolo do 156, em andamento e resolvido com foto do depois |
 | RF06 | Contestação em até 7 dias quando o problema volta |
+| Ajuste da validação | Em "Outro", o morador escreve o problema. Nomes usados por 3 moradores diferentes viram opções sugeridas. |
 
 ## Tecnologias
 

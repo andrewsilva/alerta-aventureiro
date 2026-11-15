@@ -32,4 +32,15 @@ describe('novoProblemaSchema', () => {
     const r = novoProblemaSchema.safeParse({ tipo: 'BURACO', latitude: -26.255, longitude: -48.81, descricao: '<script>alert(1)</script>' });
     expect(r.success).toBe(false);
   });
+
+  it('exige o nome do problema quando o tipo é Outro', () => {
+    const r = novoProblemaSchema.safeParse({ tipo: 'OUTRO', latitude: -26.255, longitude: -48.81 });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0].path).toEqual(['nomeOutro']);
+  });
+
+  it('padroniza o nome em Outro e descarta o nome nos outros tipos', () => {
+    expect(novoProblemaSchema.parse({ tipo: 'OUTRO', nomeOutro: '  MATO   alto ', latitude: -26.255, longitude: -48.81 }).nomeOutro).toBe('Mato alto');
+    expect(novoProblemaSchema.parse({ tipo: 'BURACO', nomeOutro: 'Mato alto', latitude: -26.255, longitude: -48.81 }).nomeOutro).toBeUndefined();
+  });
 });

@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import type { Problema, ProblemaDetalhe, StatusProblema, TipoProblema } from './modelos';
+import type { Problema, ProblemaDetalhe, StatusProblema, TipoProblema, TipoSugerido } from './modelos';
 
 export interface NovoProblema {
   tipo: TipoProblema;
+  nomeOutro?: string;
   latitude: number;
   longitude: number;
   descricao?: string;
@@ -22,6 +23,10 @@ export class ProblemasService {
     return firstValueFrom(this.http.get<Problema[]>('/api/problemas', { params }));
   }
 
+  tiposSugeridos() {
+    return firstValueFrom(this.http.get<TipoSugerido[]>('/api/problemas/tipos-sugeridos'));
+  }
+
   detalhar(id: string) {
     return firstValueFrom(this.http.get<ProblemaDetalhe>(`/api/problemas/${id}`));
   }
@@ -29,6 +34,7 @@ export class ProblemasService {
   registrar(p: NovoProblema) {
     const form = new FormData();
     form.set('tipo', p.tipo);
+    if (p.tipo === 'OUTRO' && p.nomeOutro) form.set('nomeOutro', p.nomeOutro);
     form.set('latitude', String(p.latitude));
     form.set('longitude', String(p.longitude));
     if (p.descricao) form.set('descricao', p.descricao);

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { mensagemDeErro } from '../../core/erro';
 import { comprimirImagem } from '../../core/imagem';
-import { TIPOS, rotuloTipo, textoDias, type Problema, type TipoProblema } from '../../core/modelos';
+import { TIPOS, rotuloTipo, textoDias, type Problema, type TipoProblema, type TipoSugerido } from '../../core/modelos';
 import { ProblemasService } from '../../core/problemas.service';
 import { Mapa } from '../../shared/mapa';
 import { StatusTag } from '../../shared/status-tag';
@@ -27,6 +27,8 @@ export class Registrar {
   protected readonly rotuloTipo = rotuloTipo;
   protected readonly textoDias = textoDias;
   protected tipo: TipoProblema | null = null;
+  protected nomeOutro = '';
+  protected readonly sugeridos = signal<TipoSugerido[]>([]);
   protected descricao = '';
   protected referencia = '';
   protected readonly ponto = signal<{ latitude: number; longitude: number } | null>(null);
@@ -34,10 +36,22 @@ export class Registrar {
   protected readonly nomeFoto = signal('');
   protected readonly preparandoFoto = signal(false);
   protected readonly gps = signal<'parado' | 'buscando' | 'erro'>('parado');
-  protected readonly erros = signal<{ tipo?: string; local?: string; geral?: string }>({});
+  protected readonly erros = signal<{ tipo?: string; nomeOutro?: string; local?: string; geral?: string }>({});
   protected readonly enviando = signal(false);
   protected readonly parecidos = signal<Problema[]>([]);
   protected readonly online = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
+
+  constructor() {
+    void this.carregarSugeridos();
+  }
+
+  private async carregarSugeridos() {
+    try {
+      this.sugeridos.set(await this.servico.tiposSugeridos());
+    } catch {
+      this.sugeridos.set([]);
+    }
+  }
 
   usarGps() {
     if (!('geolocation' in navigator)) { this.gps.set('erro'); return; }
@@ -77,18 +91,22 @@ export class Registrar {
 
   async enviar(forcarNovo = false) {
     if (this.enviando() || this.preparandoFoto()) return;
-    const e: { tipo?: string; local?: string } = {};
-    if (!this.tipo) e.tipo = 'Escolha o tipo do problema.';
-    if (!this.ponto()) e.local = 'Marque o local: toque em "Usar GPS" ou toque no mapa.';
+    const tipo = this.tipo;
+    const ponto = this.ponto();
+    const nomeOutro = tipo === 'OUTRO' ? this.nomeOutro.trim().replace(/\s+/g, ' ') : undefined;
+    const e: { tipo?: string; nomeOutro?: string; local?: string } = {};
+    if (!tipo) e.tipo = 'Escolha o tipo do problema.';
+    if (nomeOutro !== undefined && nomeOutro.length < 3) e.nomeOutro = 'Escreva qual é o problema, por exemplo: mato alto.';
+    if (!ponto) e.local = 'Marque o local: toque em "Usar GPS" ou toque no mapa.';
     this.erros.set(e);
-    if (e.tipo || e.local) {
-      document.getElementById(e.tipo ? 'tipos' : 'local')?.focus();
+    if (!tipo || !ponto || e.nomeOutro) {
+      document.getElementById(!tipo ? 'tipos' : e.nomeOutro ? 'nome-outro' : 'local')?.focus();
       return;
     }
     this.enviando.set(true);
     try {
       const criado = await this.servico.registrar({
-        tipo: this.tipo!, ...this.ponto()!, descricao: this.descricao.trim() || undefined,
+        tipo, nomeOutro, ...ponto, descricao: this.descricao.trim() || undefined,
         referenciaEndereco: this.referencia.trim() || undefined, foto: this.foto(), forcarNovo,
       });
       await this.router.navigate(['/problemas', criado.id], { state: { mensagem: 'Registro enviado. Obrigado por avisar o bairro!' } });
@@ -117,12 +135,25 @@ export class Registrar {
     }
   }
 
-  private limparErro(campo: 'tipo' | 'local' | 'geral') {
+  private limparErro(campo: 'tipo' | 'nomeOutro' | 'local' | 'geral') {
     this.erros.update((e) => ({ ...e, [campo]: undefined }));
   }
 
   protected escolherTipo() {
     this.parecidos.set([]);
     this.limparErro('tipo');
+    this.limparErro('nomeOutro');
+  }
+
+  protected escolherSugerido(sugestao: TipoSugerido) {
+    this.tipo = 'OUTRO';
+    this.nomeOutro = sugestao.nome;
+    this.escolherTipo();
+  }
+
+  protected atualizarNomeOutro(nome: string) {
+    this.nomeOutro = nome;
+    this.parecidos.set([]);
+    this.limparErro('nomeOutro');
   }
 }

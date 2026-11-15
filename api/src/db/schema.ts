@@ -20,6 +20,8 @@ export const morador = pgTable('morador', {
 export const problema = pgTable('problema', {
   id: uuid('id').primaryKey().defaultRandom(),
   tipo: tipoProblemaEnum('tipo').notNull(),
+  // Nome escrito pelo morador quando o tipo é OUTRO; base dos tipos sugeridos pela comunidade.
+  nomeOutro: varchar('nome_outro', { length: 40 }),
   descricao: varchar('descricao', { length: 280 }),
   latitude: doublePrecision('latitude').notNull(),
   longitude: doublePrecision('longitude').notNull(),
@@ -37,6 +39,7 @@ export const problema = pgTable('problema', {
 }, (t) => [
   index('problema_status_idx').on(t.status),
   index('problema_coordenadas_idx').on(t.latitude, t.longitude),
+  index('problema_nome_outro_idx').on(t.nomeOutro),
 ]);
 
 export const confirmacao = pgTable('confirmacao', {

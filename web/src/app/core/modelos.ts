@@ -5,6 +5,8 @@ export type TipoEvento = 'REGISTRO' | 'AVISO_PREFEITURA' | 'EM_ANDAMENTO' | 'RES
 export interface Problema {
   id: string;
   tipo: TipoProblema;
+  /** Nome escrito pelo morador quando o tipo é "Outro". */
+  nomeOutro?: string | null;
   descricao: string | null;
   latitude: number;
   longitude: number;
@@ -57,7 +59,11 @@ export const EVENTOS: Record<TipoEvento, string> = {
   CONTESTACAO: 'Contestado: o problema voltou',
 };
 
-export const rotuloTipo = (t: TipoProblema) => TIPOS.find((x) => x.valor === t)?.rotulo ?? t;
+/** Em "Outro", mostra o nome escrito pelo morador (ex.: "Mato alto"). */
+export const rotuloTipo = (t: TipoProblema, nomeOutro?: string | null) =>
+  (t === 'OUTRO' && nomeOutro) || (TIPOS.find((x) => x.valor === t)?.rotulo ?? t);
+
+export interface TipoSugerido { nome: string; moradores: number }
 
 export function diasDesde(iso: string, agora = new Date()): number {
   return Math.max(0, Math.floor((agora.getTime() - new Date(iso).getTime()) / 86_400_000));
