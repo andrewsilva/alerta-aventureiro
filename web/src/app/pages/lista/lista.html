@@ -1,0 +1,45 @@
+<header class="topo">
+  <p class="marca">Alerta Aventureiro</p>
+  <h1>Problemas perto de você</h1>
+  <p>Confirme antes de abrir um novo</p>
+</header>
+
+<main class="conteudo" id="conteudo">
+  <app-mapa [problemas]="problemas()" (problemaTocado)="focarProblema($event)" rotulo="Mapa com os problemas registrados no bairro" />
+
+  <div class="filtros" role="group" aria-label="Filtrar por situação">
+    @for (f of filtros; track f) {
+      <button type="button" [attr.aria-pressed]="filtro() === f" (click)="filtrar(f)">
+        {{ f ? STATUS[f].icone + ' ' + STATUS[f].rotulo : 'Todos' }}
+      </button>
+    }
+  </div>
+
+  @if (aviso()) { <p class="sucesso" role="status">{{ aviso() }}</p> }
+  @if (erro()) { <p class="falha" role="alert">{{ erro() }} <button class="btn peq sec" type="button" (click)="carregar()">Tentar de novo</button></p> }
+
+  @if (carregando()) {
+    <p class="vazio" role="status">Carregando problemas do bairro…</p>
+  } @else if (!problemas().length && !erro()) {
+    <div class="vazio">
+      <p>Nenhum problema registrado {{ filtro() ? 'com essa situação' : 'ainda' }}.</p>
+    </div>
+  }
+
+  @for (p of problemas(); track p.id) {
+    <article class="card" [id]="'problema-' + p.id" tabindex="-1">
+      <div class="entre">
+        <h2>{{ rotuloTipo(p.tipo) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</h2>
+        <app-status-tag [status]="p.status" />
+      </div>
+      @if (p.descricao) { <p class="meta">{{ p.descricao }}</p> }
+      <p class="meta">Aberto {{ textoDias(p.criadoEm) }} · {{ p.totalConfirmacoes + 1 }} {{ p.totalConfirmacoes === 0 ? 'vizinho afetado' : 'vizinhos afetados' }}</p>
+      @if (podeConfirmar(p)) {
+        <div class="entre" style="align-items:center">
+          <span class="meta">Já viu este problema?</span>
+          <button class="btn peq sec" type="button" (click)="confirmar(p)"><span aria-hidden="true">👍</span> Eu também vi</button>
+        </div>
+      }
+    </article>
+  }
+</main>
