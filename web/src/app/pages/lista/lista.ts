@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/erro';
 import { STATUS, rotuloTipo, textoDias, type Problema, type StatusProblema } from '../../core/modelos';
@@ -10,7 +10,7 @@ import { StatusTag } from '../../shared/status-tag';
 
 @Component({
   selector: 'app-lista',
-  imports: [Mapa, StatusTag],
+  imports: [RouterLink, Mapa, StatusTag],
   templateUrl: './lista.html',
 })
 export class Lista implements OnInit {
@@ -29,7 +29,11 @@ export class Lista implements OnInit {
   protected readonly rotuloTipo = rotuloTipo;
   protected readonly textoDias = textoDias;
 
-  ngOnInit() { this.carregar(); }
+  ngOnInit() {
+    const mensagem: unknown = this.router.currentNavigation()?.extras.state?.['mensagem'];
+    if (typeof mensagem === 'string') this.aviso.set(mensagem);
+    this.carregar();
+  }
 
   async carregar() {
     this.carregando.set(true);

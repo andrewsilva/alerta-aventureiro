@@ -1,0 +1,70 @@
+<header class="topo">
+  <p class="marca">Alerta Aventureiro</p>
+  <h1>Registrar problema</h1>
+  <p>Leva menos de 1 minuto</p>
+</header>
+
+<main class="conteudo">
+  @if (parecidos().length) {
+    <section class="card" id="parecidos" tabindex="-1" aria-labelledby="titulo-parecidos" style="border-color:#b54708">
+      <h2 id="titulo-parecidos">Encontramos {{ parecidos().length === 1 ? 'um problema parecido' : 'problemas parecidos' }} aqui perto</h2>
+      <p class="meta">Se for o mesmo, confirme para somar com os vizinhos em vez de abrir outro.</p>
+      @for (p of parecidos(); track p.id) {
+        <div class="card">
+          <div class="entre">
+            <h3>{{ rotuloTipo(p.tipo) }}{{ p.referenciaEndereco ? ' · ' + p.referenciaEndereco : '' }}</h3>
+            <app-status-tag [status]="p.status" />
+          </div>
+          <p class="meta">A {{ p.distanciaMetros }} m daqui · aberto {{ textoDias(p.criadoEm) }} · {{ p.totalConfirmacoes + 1 }} {{ p.totalConfirmacoes === 0 ? 'vizinho' : 'vizinhos' }}</p>
+          <button class="btn" type="button" (click)="confirmarExistente(p)" [disabled]="enviando() || preparandoFoto()"><span aria-hidden="true">👍</span> Eu também vi, é este</button>
+        </div>
+      }
+      <button class="btn sec" type="button" (click)="enviar(true)" [disabled]="enviando() || preparandoFoto()">É outro problema, registrar mesmo assim</button>
+    </section>
+  }
+
+  <form (ngSubmit)="enviar()" novalidate>
+    <fieldset class="grade-tipos" id="tipos" tabindex="-1" [attr.aria-describedby]="erros().tipo ? 'erro-tipo' : null">
+      <legend class="rotulo" style="grid-column:1/-1">1. O que você viu?</legend>
+      @for (t of TIPOS; track t.valor) {
+        <label class="opcao">
+          <input type="radio" name="tipo" [value]="t.valor" [(ngModel)]="tipo" (change)="escolherTipo()" />
+          <span aria-hidden="true">{{ t.icone }}</span> {{ t.rotulo }}
+        </label>
+      }
+    </fieldset>
+    @if (erros().tipo) { <p class="erro-campo" id="erro-tipo" role="alert">{{ erros().tipo }}</p> }
+
+    <div style="margin-top:16px">
+      <span class="rotulo" id="local" tabindex="-1">2. Onde fica?</span>
+      <div class="linha">
+        <span class="ajuda" style="align-self:center">{{ ponto() ? '📍 Local marcado no mapa' : 'Toque no mapa ou use o GPS' }}</span>
+        <button class="btn peq sec" type="button" (click)="usarGps()" [disabled]="gps() === 'buscando'">◎ {{ gps() === 'buscando' ? 'Buscando…' : 'Usar GPS' }}</button>
+      </div>
+      @if (gps() === 'erro') { <p class="ajuda">Não conseguimos usar o GPS. Toque no mapa no ponto do problema.</p> }
+      <div style="margin-top:8px">
+        <app-mapa [selecionavel]="true" [ponto]="ponto()" (pontoEscolhido)="escolherNoMapa($event)" rotulo="Mapa para marcar o local do problema. Toque no ponto exato." />
+      </div>
+      @if (erros().local) { <p class="erro-campo" role="alert">{{ erros().local }}</p> }
+      <label for="referencia" style="margin-top:10px">Referência (opcional)</label>
+      <input id="referencia" name="referencia" type="text" maxlength="120" placeholder="Ex.: Rua Tuiuti, perto do nº 1200" [(ngModel)]="referencia" />
+    </div>
+
+    <div style="margin-top:16px">
+      <label for="descricao">3. Conte em poucas palavras (opcional)</label>
+      <textarea id="descricao" name="descricao" maxlength="280" [(ngModel)]="descricao" aria-describedby="ajuda-descricao"></textarea>
+      <span class="ajuda" id="ajuda-descricao">{{ descricao.length }}/280 caracteres</span>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="btn sec" for="foto"><span aria-hidden="true">📷</span> {{ nomeFoto() ? 'Trocar foto' : 'Adicionar foto (opcional)' }}</label>
+      <input class="visualmente-oculto" id="foto" type="file" accept="image/*" capture="environment" (change)="escolherFoto($event)" [disabled]="preparandoFoto() || enviando()" />
+      @if (nomeFoto()) { <p class="ajuda">Foto pronta para enviar.</p> }
+    </div>
+
+    @if (!online()) { <p class="aviso" role="status" style="margin-top:12px">Sem internet agora. Seus dados continuam aqui; envie quando o sinal voltar.</p> }
+    @if (erros().geral) { <p class="falha" role="alert" style="margin-top:12px">{{ erros().geral }}</p> }
+
+    <button class="btn" type="submit" style="margin-top:16px" [disabled]="enviando() || preparandoFoto()">{{ enviando() ? 'Enviando…' : 'Enviar registro' }}</button>
+  </form>
+</main>
