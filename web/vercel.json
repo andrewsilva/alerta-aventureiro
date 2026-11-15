@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/web/browser",
+  "rewrites": [
+    { "source": "/api/:caminho*", "destination": "https://alerta-aventureiro-api.onrender.com/api/:caminho*" },
+    { "source": "/uploads/:caminho*", "destination": "https://alerta-aventureiro-api.onrender.com/uploads/:caminho*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/ngsw-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ]
+}

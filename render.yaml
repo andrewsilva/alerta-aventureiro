@@ -1,0 +1,25 @@
+# Blueprint do Render: cria a API do Alerta Aventureiro a partir deste repositório.
+# O banco continua no Neon; os segredos são informados no painel (sync: false).
+services:
+  - type: web
+    name: alerta-aventureiro-api
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: api
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run db:migrate:prod && npm start
+    healthCheckPath: /api/saude
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"
