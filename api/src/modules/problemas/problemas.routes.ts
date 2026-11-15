@@ -23,6 +23,11 @@ export function rotasProblemas(servico: ProblemasService, auth: AuthService, pas
     res.json(await servico.listar(filtro.success ? filtro.data : {}));
   });
 
+  // Antes de /:id para não ser tratado como identificador.
+  r.get('/tipos-sugeridos', async (_req, res) => {
+    res.json(await servico.tiposSugeridos());
+  });
+
   r.get('/:id', idValido, async (req, res) => {
     res.json(await servico.detalhar(String(req.params.id)));
   });

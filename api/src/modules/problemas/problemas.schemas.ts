@@ -1,17 +1,23 @@
 import { z } from 'zod/v4';
 import { tipoProblemaEnum, statusProblemaEnum } from '../../db/schema.js';
+import { normalizarNomeOutro } from './problemas.regras.js';
 
 const textoLivre = (max: number, campo: string) =>
   z.string().trim().max(max, `${campo} pode ter até ${max} caracteres.`).refine((v) => !/[<>]/.test(v), `${campo} não pode conter < ou >.`);
 
 export const novoProblemaSchema = z.object({
   tipo: z.enum(tipoProblemaEnum.enumValues, { error: 'Escolha o tipo do problema.' }),
+  nomeOutro: textoLivre(40, 'O nome do problema').optional().transform((v) => v ? normalizarNomeOutro(v) : undefined),
   latitude: z.coerce.number({ error: 'Informe o local do problema.' }).min(-90).max(90),
   longitude: z.coerce.number({ error: 'Informe o local do problema.' }).min(-180).max(180),
   descricao: textoLivre(280, 'A descrição').optional().transform((v) => v || undefined),
   referenciaEndereco: textoLivre(120, 'A referência').optional().transform((v) => v || undefined),
   forcarNovo: z.union([z.boolean(), z.enum(['true', 'false']).transform((v) => v === 'true')]).optional().default(false),
-});
+}).superRefine((dados, ctx) => {
+  if (dados.tipo === 'OUTRO' && (!dados.nomeOutro || dados.nomeOutro.length < 3)) {
+    ctx.addIssue({ code: 'custom', path: ['nomeOutro'], message: 'Escreva qual é o problema, por exemplo: mato alto.' });
+  }
+}).transform((dados) => ({ ...dados, nomeOutro: dados.tipo === 'OUTRO' ? dados.nomeOutro : undefined }));
 
 export const mudancaStatusSchema = z.object({
   status: z.enum(['AVISADO_PREFEITURA', 'EM_ANDAMENTO'], { error: 'Status inválido.' }),

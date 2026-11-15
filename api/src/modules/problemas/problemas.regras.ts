@@ -2,6 +2,9 @@ import type { StatusProblema } from '../../db/schema.js';
 
 export const RAIO_PARECIDOS_METROS = 50;
 export const PRAZO_CONTESTACAO_DIAS = 7;
+/** Quantos moradores diferentes precisam usar o mesmo nome em "Outro" para ele virar sugestão. */
+export const MIN_MORADORES_TIPO_SUGERIDO = 3;
+export const MAX_TIPOS_SUGERIDOS = 4;
 
 const ORDEM: StatusProblema[] = ['ABERTO', 'AVISADO_PREFEITURA', 'EM_ANDAMENTO', 'RESOLVIDO'];
 
@@ -39,4 +42,10 @@ export function eventoParaStatus(novo: StatusProblema) {
 
 export function primeiroNome(nome: string): string {
   return nome.trim().split(/\s+/)[0] ?? '';
+}
+
+/** Padroniza o nome escrito em "Outro" para que "mato alto" e "Mato  Alto" contem como o mesmo problema. */
+export function normalizarNomeOutro(nome: string): string {
+  const limpo = nome.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+  return limpo.charAt(0).toLocaleUpperCase('pt-BR') + limpo.slice(1);
 }
