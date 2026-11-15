@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.angular/
+.env
+*.log
+api/uploads/
+api/tmp-uploads-teste/
+.DS_Store
+Thumbs.db
+
+.neon
+.env.local
+/alerta-aventureiro-etapas/
+/alerta-aventureiro-etapas.zip
